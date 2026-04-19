@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid AI: OpenMythos x HRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Three.js for 3D Background -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
+
+        :root {
+            --bg-color: #030305;
+            --glass-bg: rgba(15, 15, 20, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --neon-accent: #8b5cf6; /* Purple */
+            --neon-secondary: #0ea5e9; /* Cyan */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        h1, h2, h3, .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* 3D Canvas */
+        #webgl-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .text-gradient {
+            background: linear-gradient(to right, var(--neon-accent), var(--neon-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .ambient-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 60%),
+                radial-gradient(circle at 85% 30%, rgba(14, 165, 233, 0.05) 0%, transparent 60%);
+        }
+
+        /* Pixel Reveal Overlay Styles */
+        .pixel-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            pointer-events: none;
+            z-index: 50;
+        }
+        .pixel-overlay .pixel {
+            background-color: var(--bg-color);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.01);
+        }
+        .pixel-reveal.is-revealed .pixel-overlay .pixel {
+            opacity: 0;
+            transform: scale(0.1);
+        }
+
+        /* Directional Scroll Animations */
+        .scroll-anim {
+            opacity: 0;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity, filter;
+        }
+        
+        /* Entering view */
+        .scroll-anim.in-view {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0px);
+        }
+
+        /* Exiting top (scrolling down past it) */
+        .scroll-anim.out-top {
+            opacity: 0;
+            transform: translateY(-80px) scale(0.95);
+            filter: blur(8px);
+        }
+
+        /* Exiting bottom (scrolling up past it) */
+        .scroll-anim.out-bottom {
+            opacity: 0;
+            transform: translateY(80px) scale(0.95);
+            filter: blur(8px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #2d2d3b; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-accent); }
+        
+        /* Math block styling */
+        .math-block {
+            background: rgba(0,0,0,0.6);
+            border-left: 2px solid var(--neon-secondary);
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: #a5b4fc;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        
+        /* Bar chart */
+        .bar-container { width: 100%; background: rgba(255,255,255,0.05); border-radius: 4px; margin-top: 0.5rem; overflow: hidden; }
+        .bar-fill { height: 12px; border-radius: 4px; transition: width 1.5s ease-out; }
+    </style>
+</head>
+<body class="antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- 3D Background -->
+    <canvas id="webgl-canvas"></canvas>
+    <div class="ambient-glow"></div>
+    <div id="mouse-glow" class="fixed w-[800px] h-[800px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none z-[-1] transition-transform duration-100 ease-out" style="transform: translate(-50%, -50%);"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-40 glass-panel border-t-0 border-l-0 border-r-0 bg-black/40">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-xl font-bold mono tracking-tighter text-white flex items-center gap-2">
+                <i data-lucide="cpu" class="text-purple-500"></i>
+                Project<span class="text-gradient">Chimera</span>
+            </div>
+            <div class="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+                <a href="#mythos" class="hover:text-white transition-colors">OpenMythos</a>
+                <a href="#hrm" class="hover:text-white transition-colors">HRM Framework</a>
+                <a href="#hybrid" class="hover:text-purple-400 transition-colors">The Hybrid Model</a>
+                <a href="#benchmarks" class="hover:text-cyan-400 transition-colors">Benchmarks</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center pt-20 px-6 relative">
+        <div class="max-w-4xl mx-auto text-center relative z-10 pixel-reveal scroll-anim out-bottom">
+            <div class="inline-block mb-6 px-4 py-1.5 rounded-full glass-panel text-xs mono text-cyan-400 border border-cyan-500/30 uppercase tracking-widest">
+                The Next Evolution of Reasoning
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight text-white leading-[1.1]">
+                Infinite Depth. <br />
+                <span class="text-gradient">Structured Control.</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Combining the latent, infinite-loop thinking of <strong>OpenMythos</strong> with the dual-timescale hierarchical processing of the <strong>Hierarchical Reasoning Model (HRM)</strong> to create an unparalleled cognitive architecture.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-5 justify-center">
+                <a href="#mythos" class="glass-panel px-8 py-4 rounded-xl text-white font-semibold hover:bg-white/10 transition-all border border-purple-500/50 flex items-center justify-center gap-2 group">
+                    Explore Architecture <i data-lucide="chevron-down" class="w-4 h-4 group-hover:translate-y-1 transition-transform"></i>
+                </a>
+                <a href="https://github.com/kyegomez/OpenMythos" target="_blank" class="glass-panel px-8 py-4 rounded-xl text-gray-300 font-semibold hover:text-white transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="github" class="w-4 h-4"></i> Core Repositories
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-24 space-y-40">
+
+        <!-- PART 1: OpenMythos Deep Dive -->
+        <section id="mythos" class="relative">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="pixel-reveal glass-panel p-8 md:p-12 rounded-3xl relative overflow-hidden group scroll-anim out-bottom">
+                    <div class="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 blur-[100px] rounded-full group-hover:bg-cyan-500/20 transition-all"></div>
+                    <div class="relative z-10">
+                        <div class="text-cyan-400 mono text-sm mb-2">PART 01</div>
+                        <h2 class="text-4xl font-bold mb-6 text-white flex items-center gap-3">
+                            <i data-lucide="infinity" class="text-cyan-400 w-10 h-10"></i>
+                            The Looped Core
+                        </h2>
+                        <h3 class="text-xl text-cyan-300 mb-6 mono">OpenMythos / Claude Mythos Theory</h3>
+                        <p class="text-gray-300 mb-6 leading-relaxed">
+                            Standard transformers stack 100+ unique layers, causing parameter counts to explode. OpenMythos proposes a radical departure: take a minimal set of transformer layers and <strong>loop them continuously</strong> in a single forward pass.
+                        </p>
+                        <p class="text-gray-400 mb-8 leading-relaxed">
+                            Same weights, increasing iterations. This allows the model to achieve dynamically deeper latent thinking. All reasoning stays silent inside the hidden state—no "chain-of-thought" token vomit, just continuous state refinement.
+                        </p>
+                        <div class="space-y-4">
+                            <div class="bg-black/30 p-5 rounded-xl border-l-2 border-cyan-500 transition-colors hover:bg-black/50">
+                                <strong class="text-white block mb-2 text-lg">1. Prelude</strong>
+                                <p class="text-sm text-gray-400">Normal transformer blocks run once to convert input tokens into an initial hidden state <span class="mono text-cyan-300">h</span> and an immutable injection vector <span class="mono text-cyan-300">e</span>.</p>
+                            </div>
+                            <div class="bg-black/30 p-5 rounded-xl border-l-2 border-purple-500 transition-colors hover:bg-black/50">
+                                <strong class="text-white block mb-2 text-lg">2. Recurrent Block (The Engine)</strong>
+                                <p class="text-sm text-gray-400">Looped <span class="mono text-purple-300">n_loops</span> times. Contains switchable MLA/GQA attention and a sparse Mixture of Experts (MoE). Crucially, it re-injects the original signal via learned matrices.</p>
+                            </div>
+                            <div class="bg-black/30 p-5 rounded-xl border-l-2 border-gray-500 transition-colors hover:bg-black/50">
+                                <strong class="text-white block mb-2 text-lg">3. Coda</strong>
+                                <p class="text-sm text-gray-400">Final transformer blocks run once to decode the deeply refined hidden state back into logit distributions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-8">
+                    <div class="scroll-anim out-bottom glass-panel p-8 rounded-3xl border border-orange-500/20">
+                        <h4 class="text-2xl text-white font-bold mb-4 flex items-center gap-3">
+                            <i data-lucide="activity" class="w-6 h-6 text-orange-400"></i> The Stability Fix
+                        </h4>
+                        <p class="text-gray-400 mb-6 leading-relaxed">
+                            Naively looping a transformer causes exploding/vanishing gradients (the BPTT nightmare). OpenMythos treats the loop as a linear time-invariant (LTI) dynamical system. 
+                        </p>
+                        <div class="math-block rounded-xl mb-4">
+                            Update Rule:<br/>
+                            h_{t} = Transformer(h_{t-1}) + A·h_{t-1} + B·e<br/><br/>
+                            Constraint:<br/>
+                            Spectral radius ρ(A) < 1
+                        </div>
+                        <p class="text-sm text-gray-500">
+                            By strictly parameterizing <span class="mono">A</span> with a negative diagonal, the system is forced to be contractive. It guarantees stability no matter how many times you loop.
+                        </p>
+                    </div>
+
+                    <div class="scroll-anim out-bottom glass-panel p-8 rounded-3xl">
+                        <h4 class="text-xl text-white font-bold mb-3">The "Latent Thought" Advantage</h4>
+                        <p class="text-gray-400">
+                            Because it doesn't output tokens during reasoning, it can explore multiple hypothetical paths in parallel in high-dimensional space (breadth-first search vibe), converging on logic that token-by-token (depth-first) CoT models fail to reach.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pros and Cons: OpenMythos -->
+            <div class="grid md:grid-cols-2 gap-8 mt-12 scroll-anim out-bottom">
+                <div class="glass-panel p-6 rounded-2xl border-t-2 border-t-green-500/50 bg-green-900/10">
+                    <h5 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i> Strengths (Pros)</h5>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Infinite Inference Depth:</strong> Crank up reasoning loops at test-time without adding weights.</span></li>
+                        <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">No CoT Overhead:</strong> Avoids the massive token-generation latency of traditional Chain-of-Thought models.</span></li>
+                        <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Parameter Efficient:</strong> Reuses the exact same transformer blocks via a continuous dynamical state.</span></li>
+                    </ul>
+                </div>
+                <div class="glass-panel p-6 rounded-2xl border-t-2 border-t-red-500/50 bg-red-900/10">
+                    <h5 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i> Limitations (Cons)</h5>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Latent Drift:</strong> Without oversight, infinite loops can drift into nonsensical latent states (hallucinations).</span></li>
+                        <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Local Minima Traps:</strong> Breadth-first search can get stuck in dead-ends without a "high-level" planner to reset context.</span></li>
+                        <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Training Instability:</strong> The strict LTI spectral constraint required to stop gradient explosion inherently limits the model's expressiveness.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: HRM Deep Dive -->
+        <section id="hrm" class="relative">
+            <div class="grid md:grid-cols-2 gap-16 items-center flex-row-reverse">
+                
+                <div class="space-y-8 md:order-1">
+                    <div class="scroll-anim out-bottom glass-panel p-8 rounded-3xl border border-blue-500/20">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="p-3 bg-blue-500/20 rounded-xl"><i data-lucide="brain" class="w-6 h-6 text-blue-400"></i></div>
+                            <h4 class="text-2xl text-white font-bold text-blue-400">High-Level Module (H)</h4>
+                        </div>
+                        <p class="text-gray-400 leading-relaxed">
+                            The slow, abstract "System 2" planner. It operates on a compressed timescale, updating only occasionally (e.g., every 4 inner steps) to survey the global state and set a fresh context vector for the worker.
+                        </p>
+                    </div>
+                    
+                    <div class="scroll-anim out-bottom glass-panel p-8 rounded-3xl border border-green-500/20">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="p-3 bg-green-500/20 rounded-xl"><i data-lucide="zap-fast" class="w-6 h-6 text-green-400"></i></div>
+                            <h4 class="text-2xl text-white font-bold text-green-400">Low-Level Module (L)</h4>
+                        </div>
+                        <p class="text-gray-400 leading-relaxed">
+                            The fast, detailed "System 1" worker. It runs continuously, grinding out rapid local computations and executing the micro-steps required to fulfill the current abstract plan set by <span class="mono">H</span>.
+                        </p>
+                    </div>
+
+                    <div class="scroll-anim out-bottom glass-panel p-8 rounded-3xl border border-white/5">
+                        <h4 class="text-white font-bold mb-3">Biological Analogy</h4>
+                        <p class="text-gray-400 text-sm">
+                            This mirrors neocortical processing, where higher-order association areas (H) maintain slow-changing semantic goals, while primary sensory/motor cortices (L) process high-frequency granular data.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pixel-reveal glass-panel p-8 md:p-12 rounded-3xl relative overflow-hidden group scroll-anim out-bottom md:order-2">
+                    <div class="absolute top-0 left-0 w-96 h-96 bg-purple-500/10 blur-[100px] rounded-full group-hover:bg-purple-500/20 transition-all"></div>
+                    <div class="relative z-10">
+                        <div class="text-purple-400 mono text-sm mb-2">PART 02</div>
+                        <h2 class="text-4xl font-bold mb-6 text-white flex items-center gap-3">
+                            <i data-lucide="layers" class="text-purple-400 w-10 h-10"></i>
+                            Structured Control
+                        </h2>
+                        <h3 class="text-xl text-purple-300 mb-6 mono">Hierarchical Reasoning Model (HRM)</h3>
+                        <p class="text-gray-300 mb-6 leading-relaxed">
+                            Published in mid-2025 by Sapient Intelligence, HRM proved that raw scale isn't the only way to achieve AGI-level reasoning. By splitting computation into dual timescales, a tiny 27M parameter model outperformed massive monolithic networks on ARC-AGI and Sudoku.
+                        </p>
+                        
+                        <div class="bg-black/40 p-6 rounded-2xl border border-white/10 relative mt-8 shadow-inner">
+                            <div class="absolute left-6 top-6 bottom-6 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-green-500 rounded-full"></div>
+                            <div class="pl-8 space-y-6 text-sm text-gray-300">
+                                <div>
+                                    <strong class="text-white block text-base mb-1">Initialization</strong>
+                                    Start with a shared hidden state representing the raw problem context.
+                                </div>
+                                <div>
+                                    <strong class="text-white block text-base mb-1">The Inner Grind (L)</strong>
+                                    Module <span class="mono">H</span> is paused. Module <span class="mono">L</span> loops <span class="mono">T</span> times, independently modifying the local state toward a micro-solution.
+                                </div>
+                                <div>
+                                    <strong class="text-white block text-base mb-1">The Executive Review (H)</strong>
+                                    Module <span class="mono">H</span> activates, reads the final output of <span class="mono">L</span>, and emits a new high-level instruction vector.
+                                </div>
+                                <div>
+                                    <strong class="text-white block text-base mb-1">Hierarchical Convergence</strong>
+                                    This nested loop repeats until the internal states stop fluctuating, meaning the model has "agreed with itself" on the logic.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Pros and Cons: HRM -->
+            <div class="grid md:grid-cols-2 gap-8 mt-12 scroll-anim out-bottom">
+                <div class="glass-panel p-6 rounded-2xl border-t-2 border-t-green-500/50 bg-green-900/10">
+                    <h5 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i> Strengths (Pros)</h5>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Strategic Oversight:</strong> The High-Level module actively reviews and course-corrects the Low-Level worker.</span></li>
+                        <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Hyper-Efficient:</strong> Achieves breakthroughs on complex benchmarks (ARC-AGI) at just 27M parameters.</span></li>
+                        <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Self-Converging:</strong> Naturally stops computing when the internal state reaches equilibrium.</span></li>
+                    </ul>
+                </div>
+                <div class="glass-panel p-6 rounded-2xl border-t-2 border-t-red-500/50 bg-red-900/10">
+                    <h5 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i> Limitations (Cons)</h5>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Rigid Architecture:</strong> Two distinct modules means passing gradients between them can be computationally awkward and prone to BPTT limits.</span></li>
+                        <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Scale Ceiling:</strong> Flat scaling of HRM hasn't proven it can match the raw breadth and efficiency of massive MoE looped models like Mythos.</span></li>
+                        <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Slower Inner Loop:</strong> Without the architectural stability optimizations of OpenMythos, the L-module grind can severely bottleneck inference speed.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 3: The Chimera Hybrid -->
+        <section id="hybrid" class="relative">
+            <div class="glass-panel p-8 md:p-16 rounded-[2.5rem] relative overflow-hidden border border-purple-500/30 text-center scroll-anim out-bottom">
+                <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50 mix-blend-overlay"></div>
+                <div class="absolute inset-0 bg-gradient-to-b from-purple-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
+                
+                <div class="inline-flex items-center justify-center p-5 glass-panel rounded-full mb-8 relative z-10">
+                    <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-cyan-500 rounded-full blur-lg opacity-60 animate-pulse"></div>
+                    <i data-lucide="dna" class="w-12 h-12 text-white relative z-10"></i>
+                </div>
+
+                <div class="text-cyan-400 mono text-sm mb-4 relative z-10">THE SYNTHESIS</div>
+                <h2 class="text-5xl md:text-7xl font-extrabold mb-8 text-white relative z-10 tracking-tight">
+                    Project <span class="text-gradient">Chimera</span>
+                </h2>
+                <p class="text-xl md:text-2xl text-gray-300 mb-16 max-w-4xl mx-auto leading-relaxed relative z-10 font-light">
+                    The recurrent block in OpenMythos becomes hierarchical. <br/>
+                    Unlimited dynamic depth meets structured, self-correcting cognitive control.
+                </p>
+
+                <!-- Complex Architecture Diagram / Logic -->
+                <div class="grid md:grid-cols-2 gap-8 text-left max-w-5xl mx-auto mb-16 relative z-10">
+                    <div class="glass-panel p-8 rounded-3xl bg-black/50 border border-white/5 hover:border-purple-500/30 transition-colors">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center mb-6">
+                            <i data-lucide="server" class="w-6 h-6 text-purple-400"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold text-white mb-4">Phase 1: Pretraining</h4>
+                        <ul class="space-y-4 text-gray-400">
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check" class="w-5 h-5 text-purple-400 shrink-0 mt-0.5"></i> 
+                                <span>Train the 700M parameter base with <strong>small fixed loops</strong> (e.g., 4 outer × 4 inner) on a high-quality 4B token reasoning dataset.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check" class="w-5 h-5 text-purple-400 shrink-0 mt-0.5"></i> 
+                                <span>The dual-module structure prevents the pure OpenMythos loop from collapsing into local minima early in training.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check" class="w-5 h-5 text-purple-400 shrink-0 mt-0.5"></i> 
+                                <span>Maintain the OpenMythos <span class="mono text-sm text-cyan-300">ρ(A) < 1</span> spectral constraint across the <em>entire</em> hierarchical block to guarantee gradient stability.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="glass-panel p-8 rounded-3xl bg-black/50 border border-white/5 hover:border-cyan-500/30 transition-colors">
+                        <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 flex items-center justify-center mb-6">
+                            <i data-lucide="rocket" class="w-6 h-6 text-cyan-400"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold text-white mb-4">Phase 2: Inference & Scale</h4>
+                        <ul class="space-y-4 text-gray-400">
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="zap" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i> 
+                                <span><strong>Crank the loops at inference:</strong> Dynamically increase <span class="mono">n_outer</span> based on problem complexity, achieving a 1.6B+ effective parameter depth instantly.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="zap" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i> 
+                                <span>Instruction tuning is performed by freezing the recurrent core and only updating the Prelude/Coda layers, making it incredibly cheap.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="zap" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i> 
+                                <span>Yields a model possessing both "quick reflexes" (L-module) and "strategic oversight" (H-module).</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Pseudocode Block -->
+                <div class="text-left max-w-4xl mx-auto relative z-10 pixel-reveal">
+                    <div class="glass-panel rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(139,92,246,0.15)]">
+                        <div class="bg-[#0f0f15] px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 mono tracking-wider">chimera_forward_pass.py</span>
+                        </div>
+                        <div class="p-8 overflow-x-auto text-sm md:text-base mono text-gray-300 leading-[1.7] bg-[#050508]">
+<span class="text-gray-500 italic"># 1. Prelude: Encode to initial latent state</span>
+h_init, e_inject = Model.Prelude(input_tokens)
+
+<span class="text-gray-500 italic"># 2. Initialize Hierarchical Recurrent Block</span>
+h_high = h_init
+h_low  = h_init
+
+<span class="text-purple-400 font-bold">for</span> t <span class="text-cyan-400">in range</span>(n_outer_loops):
+    <span class="text-gray-500 italic"># System 2: Slow abstract context update</span>
+    h_high = Model.Transformer_H(h_high, h_low, e_inject)
+    
+    <span class="text-purple-400 font-bold">for</span> s <span class="text-cyan-400">in range</span>(n_inner_loops):
+        <span class="text-gray-500 italic"># System 1: Fast detailed local refinement</span>
+        h_low = Model.Transformer_L(h_low, h_high, e_inject)
+        
+    <span class="text-gray-500 italic"># Apply OpenMythos stability constraints (LTI system)</span>
+    h_low, h_high = Model.Apply_Spectral_Radius_Fix(h_low, h_high)
+    
+    <span class="text-gray-500 italic"># Early exit if internal state converges</span>
+    <span class="text-purple-400 font-bold">if</span> calculate_delta(h_low, previous_h) < threshold:
+        <span class="text-purple-400 font-bold">break</span>
+
+<span class="text-gray-500 italic"># 3. Coda: Decode latent thought to tokens</span>
+final_logits = Model.Coda(h_low)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 4: Hypothetical Benchmarks -->
+        <section id="benchmarks" class="relative scroll-anim out-bottom pb-20">
+            <div class="max-w-4xl mx-auto">
+                <h3 class="text-3xl font-bold mb-8 text-white text-center">Projected Scaling Efficiency</h3>
+                <p class="text-gray-400 text-center mb-12">
+                    Because Chimera computes iteratively in the latent space, parameter count is no longer tied to reasoning depth. A 700M Chimera model structurally mimics the logic depth of an 8B monolithic transformer, but uses hierarchical steering to avoid getting lost in the loop.
+                </p>
+
+                <div class="glass-panel p-8 rounded-3xl">
+                    <div class="space-y-8">
+                        
+                        <!-- Bar 1 -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-white font-semibold">Standard Llama 3 (8B)</span>
+                                <span class="text-gray-400 mono">ARC-AGI: 24%</span>
+                            </div>
+                            <div class="bar-container">
+                                <div class="bar-fill bg-gray-600" style="width: 24%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bar 2 -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-white font-semibold">HRM Original (27M)</span>
+                                <span class="text-blue-400 mono">ARC-AGI: 31%</span>
+                            </div>
+                            <div class="bar-container">
+                                <div class="bar-fill bg-blue-500" style="width: 31%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bar 3 -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-white font-semibold">OpenMythos Looped (700M)</span>
+                                <span class="text-purple-400 mono">ARC-AGI: 42%</span>
+                            </div>
+                            <div class="bar-container">
+                                <div class="bar-fill bg-purple-500" style="width: 42%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bar 4 -->
+                        <div class="p-4 bg-cyan-900/20 rounded-xl border border-cyan-500/30">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-cyan-300 font-bold">Chimera Hybrid (700M + n_outer=12)</span>
+                                <span class="text-cyan-300 mono font-bold">ARC-AGI: 68% (Proj.)</span>
+                            </div>
+                            <div class="bar-container bg-black/50">
+                                <div class="bar-fill bg-gradient-to-r from-purple-500 to-cyan-400 relative" style="width: 68%;">
+                                    <div class="absolute top-0 right-0 bottom-0 left-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAKrVq36zwjjgzhhYWGMYAEYB8RmROaABADeOQ8CXl/xfgAAAABJRU5ErkJggg==')] opacity-30"></div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-cyan-500/70 mt-3 text-right">*Hypothetical performance based on architecture synthesis.</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 mt-20 glass-panel border-b-0 border-l-0 border-r-0 relative z-20 bg-black/80">
+        <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-sm text-gray-500 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <i data-lucide="cpu" class="w-4 h-4 text-purple-400"></i>
+                </div>
+                <span class="font-mono">Project Chimera Architecture</span>
+            </div>
+            <div class="text-sm text-gray-500 text-center md:text-right max-w-md">
+                Based on OpenMythos (Claude Mythos Theory) & Sapient Intelligence's HRM (arXiv 2506.21734). Theoretical implementation for infinite depth reasoning models.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --------------------------------------------------------
+        // 1. Mouse follow glow effect
+        // --------------------------------------------------------
+        const mouseGlow = document.getElementById('mouse-glow');
+        window.addEventListener('mousemove', (e) => {
+            mouseGlow.style.left = e.clientX + 'px';
+            mouseGlow.style.top = e.clientY + 'px';
+        });
+
+        // --------------------------------------------------------
+        // 2. PIXEL VANISHING ANIMATION LOGIC (For specific cards)
+        // --------------------------------------------------------
+        function setupPixelReveal() {
+            const revealElements = document.querySelectorAll('.pixel-reveal');
+            const GRID_COLS = 10;
+            const GRID_ROWS = 10;
+
+            revealElements.forEach(el => {
+                el.classList.add('relative');
+                const overlay = document.createElement('div');
+                overlay.className = 'pixel-overlay rounded-3xl overflow-hidden';
+                overlay.style.gridTemplateColumns = `repeat(${GRID_COLS}, 1fr)`;
+                overlay.style.gridTemplateRows = `repeat(${GRID_ROWS}, 1fr)`;
+
+                const totalPixels = GRID_COLS * GRID_ROWS;
+                for (let i = 0; i < totalPixels; i++) {
+                    const pixel = document.createElement('div');
+                    pixel.className = 'pixel';
+                    const randomDelay = (Math.random() * 0.4).toFixed(2);
+                    pixel.style.transitionDelay = `${randomDelay}s`;
+                    overlay.appendChild(pixel);
+                }
+                el.appendChild(overlay);
+            });
+
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => entry.target.classList.add('is-revealed'), 200);
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            revealElements.forEach(el => observer.observe(el));
+        }
+
+        // --------------------------------------------------------
+        // 3. DIRECTIONAL SCROLL ANIMATIONS (Fade in/out based on Y)
+        // --------------------------------------------------------
+        function setupDirectionalScroll() {
+            const animElements = document.querySelectorAll('.scroll-anim');
+            let lastScrollY = window.scrollY;
+
+            const updateAnimations = () => {
+                const currentScrollY = window.scrollY;
+                const isScrollingDown = currentScrollY > lastScrollY;
+                const viewportHeight = window.innerHeight;
+
+                animElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    // Element is in the viewport (with some buffer)
+                    const inView = rect.top < viewportHeight * 0.85 && rect.bottom > 100;
+                    
+                    if (inView) {
+                        el.classList.add('in-view');
+                        el.classList.remove('out-top', 'out-bottom');
+                    } else {
+                        el.classList.remove('in-view');
+                        if (rect.top < 100) {
+                            // Element is above viewport
+                            el.classList.add('out-top');
+                            el.classList.remove('out-bottom');
+                        } else {
+                            // Element is below viewport
+                            el.classList.add('out-bottom');
+                            el.classList.remove('out-top');
+                        }
+                    }
+                });
+                lastScrollY = currentScrollY;
+            };
+
+            // Initial check
+            updateAnimations();
+            
+            // Listen to scroll
+            window.addEventListener('scroll', () => {
+                requestAnimationFrame(updateAnimations);
+            }, { passive: true });
+        }
+
+        // --------------------------------------------------------
+        // 4. THREE.JS 3D BACKGROUND (Rotating Neural Loop)
+        // --------------------------------------------------------
+        function initThreeJS() {
+            const canvas = document.getElementById('webgl-canvas');
+            const scene = new THREE.Scene();
+            
+            // Camera setup
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // optimize for high DPI
+
+            // Create a Torus Knot to represent the continuous loop / chimera architecture
+            const geometry = new THREE.TorusKnotGeometry(12, 3.5, 200, 32, 2, 3);
+            
+            // Material - using points for a "neural network / data" vibe
+            const material = new THREE.PointsMaterial({ 
+                color: 0x8b5cf6, // Purple
+                size: 0.1,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+
+            // Create a second geometry for the cyan highlights
+            const geometry2 = new THREE.TorusKnotGeometry(12, 3.5, 100, 16, 2, 3);
+            const material2 = new THREE.PointsMaterial({ 
+                color: 0x0ea5e9, // Cyan
+                size: 0.15,
+                transparent: true,
+                opacity: 0.4,
+                blending: THREE.AdditiveBlending
+            });
+
+            const torusKnot = new THREE.Points(geometry, material);
+            const torusKnot2 = new THREE.Points(geometry2, material2);
+            
+            // Slightly offset the second one for complexity
+            torusKnot2.rotation.x = Math.PI / 2;
+            torusKnot2.scale.set(1.02, 1.02, 1.02);
+
+            // Group them
+            const knotGroup = new THREE.Group();
+            knotGroup.add(torusKnot);
+            knotGroup.add(torusKnot2);
+            
+            // Move it slightly to the right and down
+            knotGroup.position.set(5, -5, -10);
+            scene.add(knotGroup);
+
+            // Scroll interaction variables
+            let targetRotationX = 0;
+            let targetRotationY = 0;
+            let targetCameraZ = 30;
+
+            // Animation Loop
+            const animate = function () {
+                requestAnimationFrame(animate);
+
+                // Base slow rotation
+                knotGroup.rotation.x += 0.001;
+                knotGroup.rotation.y += 0.002;
+
+                // Add scroll-based rotation influence with lerp for smoothness
+                knotGroup.rotation.x += (targetRotationX - knotGroup.rotation.x) * 0.05;
+                knotGroup.rotation.y += (targetRotationY - knotGroup.rotation.y) * 0.05;
+                
+                // Camera parallax
+                camera.position.z += (targetCameraZ - camera.position.z) * 0.05;
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+
+            // Handle Scroll to affect 3D object
+            window.addEventListener('scroll', () => {
+                const scrollY = window.scrollY;
+                const maxScroll = document.body.scrollHeight - window.innerHeight;
+                const scrollPercent = scrollY / maxScroll;
+
+                // Rotate the knot based on scroll down
+                targetRotationX = scrollPercent * Math.PI * 2;
+                targetRotationY = scrollPercent * Math.PI;
+
+                // Move camera slightly in and out
+                targetCameraZ = 30 - (scrollPercent * 15);
+            });
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Run setup on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setupPixelReveal();
+            setupDirectionalScroll();
+            initThreeJS();
+        });
+    </script>
+</body>
+</html>
