@@ -152,7 +152,7 @@
 
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-40 glass-panel border-t-0 border-l-0 border-r-0 bg-black/40">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="w-full px-6 md:px-12 lg:px-24 py-4 flex justify-between items-center">
             <div class="text-xl font-bold mono tracking-tighter text-white flex items-center gap-2">
                 <i data-lucide="cpu" class="text-purple-500"></i>
                 Project<span class="text-gradient">Chimera</span>
@@ -168,15 +168,15 @@
 
     <!-- Hero Section -->
     <section class="min-h-screen flex items-center justify-center pt-20 px-6 relative">
-        <div class="max-w-4xl mx-auto text-center relative z-10 pixel-reveal scroll-anim out-bottom">
+        <div class="w-full max-w-6xl mx-auto text-center relative z-10 pixel-reveal scroll-anim out-bottom">
             <div class="inline-block mb-6 px-4 py-1.5 rounded-full glass-panel text-xs mono text-cyan-400 border border-cyan-500/30 uppercase tracking-widest">
                 The Next Evolution of Reasoning
             </div>
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight text-white leading-[1.1]">
+            <h1 class="text-5xl md:text-7xl lg:text-8xl font-extrabold mb-6 tracking-tight text-white leading-[1.1]">
                 Infinite Depth. <br />
                 <span class="text-gradient">Structured Control.</span>
             </h1>
-            <p class="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p class="text-lg md:text-xl lg:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
                 Combining the latent, infinite-loop thinking of <strong>OpenMythos</strong> with the dual-timescale hierarchical processing of the <strong>Hierarchical Reasoning Model (HRM)</strong> to create an unparalleled cognitive architecture.
             </p>
             <div class="flex flex-col sm:flex-row gap-5 justify-center">
@@ -191,12 +191,12 @@
     </section>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-6 py-24 space-y-40">
+    <main class="w-full px-6 md:px-12 lg:px-24 xl:px-32 py-24 space-y-40">
 
         <!-- PART 1: OpenMythos Deep Dive -->
         <section id="mythos" class="relative">
-            <div class="grid md:grid-cols-2 gap-16 items-center">
-                <div class="pixel-reveal glass-panel p-8 md:p-12 rounded-3xl relative overflow-hidden group scroll-anim out-bottom">
+            <div class="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
+                <div class="pixel-reveal glass-panel p-8 md:p-12 xl:p-16 rounded-3xl relative overflow-hidden group scroll-anim out-bottom">
                     <div class="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 blur-[100px] rounded-full group-hover:bg-cyan-500/20 transition-all"></div>
                     <div class="relative z-10">
                         <div class="text-cyan-400 mono text-sm mb-2">PART 01</div>
@@ -257,19 +257,19 @@
             </div>
 
             <!-- Pros and Cons: OpenMythos -->
-            <div class="grid md:grid-cols-2 gap-8 mt-12 scroll-anim out-bottom">
-                <div class="glass-panel p-6 rounded-2xl border-t-2 border-t-green-500/50 bg-green-900/10">
-                    <h5 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i> Strengths (Pros)</h5>
-                    <ul class="space-y-3 text-sm text-gray-400">
-                        <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Infinite Inference Depth:</strong> Crank up reasoning loops at test-time without adding weights.</span></li>
+            <div class="grid lg:grid-cols-2 gap-8 lg:gap-12 mt-12 scroll-anim out-bottom">
+                <div class="glass-panel p-8 rounded-2xl border-t-2 border-t-green-500/50 bg-green-900/10">
+                    <h5 class="text-white text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="check-circle" class="w-6 h-6 text-green-400"></i> Strengths (Pros)</h5>
+                    <ul class="space-y-4 text-base text-gray-400">
+                        <li class="flex items-start gap-3"><i data-lucide="plus" class="w-5 h-5 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Infinite Inference Depth:</strong> Crank up reasoning loops at test-time without adding weights.</span></li>
                         <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">No CoT Overhead:</strong> Avoids the massive token-generation latency of traditional Chain-of-Thought models.</span></li>
                         <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Parameter Efficient:</strong> Reuses the exact same transformer blocks via a continuous dynamical state.</span></li>
                     </ul>
                 </div>
-                <div class="glass-panel p-6 rounded-2xl border-t-2 border-t-red-500/50 bg-red-900/10">
-                    <h5 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i> Limitations (Cons)</h5>
-                    <ul class="space-y-3 text-sm text-gray-400">
-                        <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Latent Drift:</strong> Without oversight, infinite loops can drift into nonsensical latent states (hallucinations).</span></li>
+                <div class="glass-panel p-8 rounded-2xl border-t-2 border-t-red-500/50 bg-red-900/10">
+                    <h5 class="text-white text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-6 h-6 text-red-400"></i> Limitations (Cons)</h5>
+                    <ul class="space-y-4 text-base text-gray-400">
+                        <li class="flex items-start gap-3"><i data-lucide="minus" class="w-5 h-5 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Latent Drift:</strong> Without oversight, infinite loops can drift into nonsensical latent states (hallucinations).</span></li>
                         <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Local Minima Traps:</strong> Breadth-first search can get stuck in dead-ends without a "high-level" planner to reset context.</span></li>
                         <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Training Instability:</strong> The strict LTI spectral constraint required to stop gradient explosion inherently limits the model's expressiveness.</span></li>
                     </ul>
@@ -279,9 +279,9 @@
 
         <!-- PART 2: HRM Deep Dive -->
         <section id="hrm" class="relative">
-            <div class="grid md:grid-cols-2 gap-16 items-center flex-row-reverse">
+            <div class="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center flex-row-reverse">
                 
-                <div class="space-y-8 md:order-1">
+                <div class="space-y-8 lg:order-1">
                     <div class="scroll-anim out-bottom glass-panel p-8 rounded-3xl border border-blue-500/20">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="p-3 bg-blue-500/20 rounded-xl"><i data-lucide="brain" class="w-6 h-6 text-blue-400"></i></div>
@@ -310,7 +310,7 @@
                     </div>
                 </div>
 
-                <div class="pixel-reveal glass-panel p-8 md:p-12 rounded-3xl relative overflow-hidden group scroll-anim out-bottom md:order-2">
+                <div class="pixel-reveal glass-panel p-8 md:p-12 xl:p-16 rounded-3xl relative overflow-hidden group scroll-anim out-bottom lg:order-2">
                     <div class="absolute top-0 left-0 w-96 h-96 bg-purple-500/10 blur-[100px] rounded-full group-hover:bg-purple-500/20 transition-all"></div>
                     <div class="relative z-10">
                         <div class="text-purple-400 mono text-sm mb-2">PART 02</div>
@@ -350,19 +350,19 @@
             </div>
 
             <!-- Pros and Cons: HRM -->
-            <div class="grid md:grid-cols-2 gap-8 mt-12 scroll-anim out-bottom">
-                <div class="glass-panel p-6 rounded-2xl border-t-2 border-t-green-500/50 bg-green-900/10">
-                    <h5 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i> Strengths (Pros)</h5>
-                    <ul class="space-y-3 text-sm text-gray-400">
-                        <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Strategic Oversight:</strong> The High-Level module actively reviews and course-corrects the Low-Level worker.</span></li>
+            <div class="grid lg:grid-cols-2 gap-8 lg:gap-12 mt-12 scroll-anim out-bottom">
+                <div class="glass-panel p-8 rounded-2xl border-t-2 border-t-green-500/50 bg-green-900/10">
+                    <h5 class="text-white text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="check-circle" class="w-6 h-6 text-green-400"></i> Strengths (Pros)</h5>
+                    <ul class="space-y-4 text-base text-gray-400">
+                        <li class="flex items-start gap-3"><i data-lucide="plus" class="w-5 h-5 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Strategic Oversight:</strong> The High-Level module actively reviews and course-corrects the Low-Level worker.</span></li>
                         <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Hyper-Efficient:</strong> Achieves breakthroughs on complex benchmarks (ARC-AGI) at just 27M parameters.</span></li>
                         <li class="flex items-start gap-2"><i data-lucide="plus" class="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Self-Converging:</strong> Naturally stops computing when the internal state reaches equilibrium.</span></li>
                     </ul>
                 </div>
-                <div class="glass-panel p-6 rounded-2xl border-t-2 border-t-red-500/50 bg-red-900/10">
-                    <h5 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i> Limitations (Cons)</h5>
-                    <ul class="space-y-3 text-sm text-gray-400">
-                        <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Rigid Architecture:</strong> Two distinct modules means passing gradients between them can be computationally awkward and prone to BPTT limits.</span></li>
+                <div class="glass-panel p-8 rounded-2xl border-t-2 border-t-red-500/50 bg-red-900/10">
+                    <h5 class="text-white text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-6 h-6 text-red-400"></i> Limitations (Cons)</h5>
+                    <ul class="space-y-4 text-base text-gray-400">
+                        <li class="flex items-start gap-3"><i data-lucide="minus" class="w-5 h-5 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Rigid Architecture:</strong> Two distinct modules means passing gradients between them can be computationally awkward and prone to BPTT limits.</span></li>
                         <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Scale Ceiling:</strong> Flat scaling of HRM hasn't proven it can match the raw breadth and efficiency of massive MoE looped models like Mythos.</span></li>
                         <li class="flex items-start gap-2"><i data-lucide="minus" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i> <span><strong class="text-gray-300">Slower Inner Loop:</strong> Without the architectural stability optimizations of OpenMythos, the L-module grind can severely bottleneck inference speed.</span></li>
                     </ul>
@@ -382,17 +382,17 @@
                 </div>
 
                 <div class="text-cyan-400 mono text-sm mb-4 relative z-10">THE SYNTHESIS</div>
-                <h2 class="text-5xl md:text-7xl font-extrabold mb-8 text-white relative z-10 tracking-tight">
+                <h2 class="text-5xl md:text-7xl lg:text-8xl font-extrabold mb-8 text-white relative z-10 tracking-tight">
                     Project <span class="text-gradient">Chimera</span>
                 </h2>
-                <p class="text-xl md:text-2xl text-gray-300 mb-16 max-w-4xl mx-auto leading-relaxed relative z-10 font-light">
+                <p class="text-xl md:text-2xl text-gray-300 mb-16 max-w-5xl mx-auto leading-relaxed relative z-10 font-light">
                     The recurrent block in OpenMythos becomes hierarchical. <br/>
                     Unlimited dynamic depth meets structured, self-correcting cognitive control.
                 </p>
 
                 <!-- Complex Architecture Diagram / Logic -->
-                <div class="grid md:grid-cols-2 gap-8 text-left max-w-5xl mx-auto mb-16 relative z-10">
-                    <div class="glass-panel p-8 rounded-3xl bg-black/50 border border-white/5 hover:border-purple-500/30 transition-colors">
+                <div class="grid lg:grid-cols-2 gap-8 lg:gap-12 text-left w-full mx-auto mb-16 relative z-10">
+                    <div class="glass-panel p-8 xl:p-12 rounded-3xl bg-black/50 border border-white/5 hover:border-purple-500/30 transition-colors">
                         <div class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center mb-6">
                             <i data-lucide="server" class="w-6 h-6 text-purple-400"></i>
                         </div>
@@ -413,7 +413,7 @@
                         </ul>
                     </div>
                     
-                    <div class="glass-panel p-8 rounded-3xl bg-black/50 border border-white/5 hover:border-cyan-500/30 transition-colors">
+                    <div class="glass-panel p-8 xl:p-12 rounded-3xl bg-black/50 border border-white/5 hover:border-cyan-500/30 transition-colors">
                         <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 flex items-center justify-center mb-6">
                             <i data-lucide="rocket" class="w-6 h-6 text-cyan-400"></i>
                         </div>
@@ -436,7 +436,7 @@
                 </div>
 
                 <!-- Pseudocode Block -->
-                <div class="text-left max-w-4xl mx-auto relative z-10 pixel-reveal">
+                <div class="text-left w-full max-w-6xl mx-auto relative z-10 pixel-reveal">
                     <div class="glass-panel rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(139,92,246,0.15)]">
                         <div class="bg-[#0f0f15] px-6 py-4 border-b border-white/5 flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -479,13 +479,13 @@ final_logits = Model.Coda(h_low)
 
         <!-- PART 4: Hypothetical Benchmarks -->
         <section id="benchmarks" class="relative scroll-anim out-bottom pb-20">
-            <div class="max-w-4xl mx-auto">
-                <h3 class="text-3xl font-bold mb-8 text-white text-center">Projected Scaling Efficiency</h3>
-                <p class="text-gray-400 text-center mb-12">
+            <div class="w-full max-w-6xl mx-auto">
+                <h3 class="text-4xl font-bold mb-8 text-white text-center">Projected Scaling Efficiency</h3>
+                <p class="text-lg text-gray-400 text-center mb-16 max-w-4xl mx-auto">
                     Because Chimera computes iteratively in the latent space, parameter count is no longer tied to reasoning depth. A 700M Chimera model structurally mimics the logic depth of an 8B monolithic transformer, but uses hierarchical steering to avoid getting lost in the loop.
                 </p>
 
-                <div class="glass-panel p-8 rounded-3xl">
+                <div class="glass-panel p-8 md:p-12 rounded-3xl">
                     <div class="space-y-8">
                         
                         <!-- Bar 1 -->
@@ -544,7 +544,7 @@ final_logits = Model.Coda(h_low)
 
     <!-- Footer -->
     <footer class="border-t border-white/10 mt-20 glass-panel border-b-0 border-l-0 border-r-0 relative z-20 bg-black/80">
-        <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="w-full px-6 md:px-12 lg:px-24 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="text-sm text-gray-500 flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
                     <i data-lucide="cpu" class="w-4 h-4 text-purple-400"></i>
